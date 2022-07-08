@@ -2,6 +2,7 @@ import configparser
 import logging
 import os
 import sys
+from sqlite3 import Cursor
 
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, \
     CallbackQuery
@@ -58,17 +59,27 @@ def set_favorites(update: Update, context: CallbackContext):
     arg: list = context.args
     if len(arg) != 2:
         update.message.reply_text(
-            'Please enter the correct command!\nFormat: /set_favorites BUS_STOP_NUMBER NOTE \nFor example: /set_favorites 70240 Termini')
+            'Please enter the correct command!\nFormat: /setfavorites BUS_STOP_NUMBER NOTE \nFor example: /setfavorites 70240 Termini')
     else:
-        c = database_conn.cursor()
-        sql = "INSERT INTO favorites (CHAT_ID, STOP, NOTE) VALUES ('"+str(update.effective_chat.id)+"', '"+arg[0]+"','"+arg[1]+"' )"
-        c.execute(sql)
-        database_conn.commit()
-        update.message.reply_text("Insert or update data successful!")
+        c = db_connection.cursor()
+        sql_select = "SELECT CHAT_ID, STOP from favorites where CHAT_ID='" + str(
+            update.effective_chat.id) + "' AND STOP='" + arg[0] + "'"
+        result = c.execute(sql_select).fetchone()
+        if result == None:
+            sql_insert = "INSERT INTO favorites (CHAT_ID, STOP, NOTE) VALUES ('" + str(
+                update.effective_chat.id) + "', '" + arg[0] + "','" + arg[1] + "' )"
+            c.execute(sql_insert)
+            db_connection.commit()
+            update.message.reply_text("Insert data successful!")
+        else:
+            sql_update = "UPDATE favorites set NOTE = '" + arg[1] + "' where ID='" + arg[0] +"'"
+            c.execute(sql_update)
+            db_connection.commit()
+            update.message.reply_text("Update data successful!")
 
 
 def get_favorites(update: Update, context: CallbackContext):
-    cursor = database_conn.execute(
+    cursor = db_connection.execute(
         "SELECT CHAT_ID, STOP, NOTE from favorites where CHAT_ID=" + str(update.effective_chat.id))
     keyboard = []
     for row in cursor:
@@ -77,6 +88,26 @@ def get_favorites(update: Update, context: CallbackContext):
         update.message.reply_text("You don't have any favorite bus stop!")
     else:
         update.message.reply_text('Choose a bus stop:', reply_markup=InlineKeyboardMarkup(keyboard))
+
+def del_favorites(update: Update, context: CallbackContext):
+    arg: list = context.args
+    if len(arg) != 1:
+        update.message.reply_text(
+            'Please enter the correct command!\nFormat: /delfavorites BUS_STOP_NUMBER \nFor example: /delfavorites 70240')
+    else:
+        c = db_connection.cursor()
+        sql_select = "SELECT CHAT_ID, STOP from favorites where CHAT_ID='" + str(
+            update.effective_chat.id) + "' AND STOP='" + arg[0] + "'"
+        result = c.execute(sql_select).fetchone()
+
+        if result is None:
+            update.message.reply_text("Bus stop does not exist in Favorites!")
+        else:
+            sql_delete = "DELETE from favorites where CHAT_ID='" + str(update.effective_chat.id) + "' AND STOP='" + arg[0] + "'"
+            result = c.execute(sql_delete)
+            db_connection.commit()
+            update.message.reply_text("Bus stop delete successful!")
+
 
 
 def unknown(update: Update, context: CallbackContext):
@@ -100,9 +131,9 @@ def get_token() -> str:
 
 
 def get_database():
-    database_conn = sqlite3.connect('database.db', check_same_thread=False)
+    db_connection = sqlite3.connect('database.db', check_same_thread=False)
     try:
-        c = database_conn.cursor()
+        c = db_connection.cursor()
         c.execute('''CREATE TABLE favorites
                (ID INTEGER PRIMARY KEY     autoincrement,
                CHAT_ID           TEXT    NOT NULL,
@@ -112,14 +143,14 @@ def get_database():
                (ID INTEGER PRIMARY KEY     autoincrement,
                CHAT_ID           TEXT    NOT NULL,
                MODE            INT     NOT NULL);''')
-        database_conn.commit()
+        db_connection.commit()
     except sqlite3.OperationalError:
         pass
-    return database_conn
+    return db_connection
 
 
 if __name__ == '__main__':
-    database_conn = get_database()
+    db_connection = get_database()
 
     updater = Updater(get_token(), use_context=True)
     dp = updater.dispatcher
@@ -130,6 +161,7 @@ if __name__ == '__main__':
     dp.add_handler(CommandHandler("notify", notify))
     dp.add_handler(CommandHandler("getfavorites", get_favorites))
     dp.add_handler(CommandHandler("setfavorites", set_favorites))
+    dp.add_handler(CommandHandler("delfavorites", del_favorites))
     dp.add_handler(CallbackQueryHandler(button))  # handling inline buttons pressing
     dp.add_handler(MessageHandler(Filters.text & (~Filters.command), echo))
     dp.add_handler(MessageHandler(Filters.command, unknown))
