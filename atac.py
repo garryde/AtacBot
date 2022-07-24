@@ -26,8 +26,9 @@ def get_status(result_dic: dict) -> str:
     if result_set is None:
         txt = "No Bus"
     else:
+        empty_string = "            "
         for bus in result_set:
-            txt += bus['line'] + "  "+bus['distanzaAVM'].replace('FERMATA', 'Stop').replace('FERMATE', 'Stops').replace('A CAPOLINEA','At The Terminal').replace('IN ARRIVO', 'Arriving') + "\n"
+            txt += bus['line'] + empty_string[:(5-len(bus['line']))*2] +bus['distanzaAVM'].replace('FERMATA', 'Stop').replace('FERMATE', 'Stops').replace('A CAPOLINEA','At The Terminal').replace('IN ARRIVO', 'Arriving') + "\n"
     return txt
 
 

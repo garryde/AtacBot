@@ -24,24 +24,30 @@ class ChannelMessage(threading.Thread):
         self.no_info = False
         self.count = 0
         self.sent = ''
+        # Cycle interval
         self.sleep_time = 15
+        self.no_info_sleep_time = 5
+        # Thread activated duration
         self.cycle = 15*60
 
     def run(self):
         while self.flag:
             print(threading.Thread.getName(self)+": "+str(self.count))
             full_data = atac.get_full_data(self.number)
+            # No data from ATAC
             if atac.get_stop_name(full_data) == '':
                 if self.no_info:
-                    result = "No information!"
+                    result = "No bus information!"
                     self.no_info = False
                 else:
                     self.no_info = True
-                    time.sleep(3)
+                    time.sleep(self.no_info_sleep_time)
                     continue
+            # Received data from ATAC
             else:
                 self.no_info = False
-                result = atac.get_stop_name(full_data) + "\n" + atac.get_status(full_data)
+                # Splicing information
+                result = "🚏 " + atac.get_stop_name(full_data) + "\n" + atac.get_status(full_data)
             if self.count == 0:
                 self.message = self.context.bot.send_message(chat_id=self.chat_id, text=result)
                 self.sent = result
