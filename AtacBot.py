@@ -2,7 +2,6 @@ import configparser
 import logging
 import os
 import sys
-from sqlite3 import Cursor
 
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, \
     CallbackQuery
@@ -10,10 +9,12 @@ from telegram.ext import CommandHandler, MessageHandler, Updater, CallbackContex
 from channel_message import ChannelMessage
 import sqlite3
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+# logger init
+log_format = '%(asctime)s; %(levelname)s; %(message)s'
+logging.basicConfig(filename='logbook.log', level=logging.INFO, format=log_format)
+logging.getLogger('deepl').setLevel(logging.ERROR)
+
+
 
 thread_pool = {}
 
@@ -26,12 +27,22 @@ def stop(update: Update, context: CallbackContext):
     thread: ChannelMessage = thread_pool.get(update.effective_chat.id)
     if thread is None:
         result = "You don't have active monitor!"
-    elif not thread.flag:
+    elif not thread.stop_flag:
         result = "You don't have active monitor!"
     else:
-        thread.flag = False
+        thread.stop_flag = False
         thread_pool.pop(update.effective_chat.id)
         result = "Monitor stopped!"
+    update.message.reply_text(result)
+
+def check(update: Update, context: CallbackContext):
+    thread: ChannelMessage = thread_pool.get(update.effective_chat.id)
+    if thread is None:
+        result = "You don't have active monitor!"
+    elif not thread.stop_flag:
+        result = "You don't have active monitor!"
+    else:
+        result = "You have an active monitor!"
     update.message.reply_text(result)
 
 
@@ -41,7 +52,7 @@ def echo(update: Update, context: CallbackContext, notification: bool = False):
 
     thread_p: ChannelMessage = thread_pool.get(update.effective_chat.id)
     if thread_p is not None:
-        thread_p.flag = False
+        thread_p.stop_flag = False
     thread_pool[update.effective_chat.id] = thread
 
 
@@ -158,6 +169,7 @@ if __name__ == '__main__':
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("stop", stop))
+    dp.add_handler(CommandHandler("check", check))
     dp.add_handler(CommandHandler("notify", notify))
     dp.add_handler(CommandHandler("getfavorites", get_favorites))
     dp.add_handler(CommandHandler("setfavorites", set_favorites))
@@ -165,7 +177,8 @@ if __name__ == '__main__':
     dp.add_handler(CallbackQueryHandler(button))  # handling inline buttons pressing
     dp.add_handler(MessageHandler(Filters.text & (~Filters.command), echo))
     dp.add_handler(MessageHandler(Filters.command, unknown))
-
+    # Log system started
+    logging.info('System start successfully!')
     # Start the Bot
     updater.start_polling()
     updater.idle()
