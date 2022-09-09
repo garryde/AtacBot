@@ -6,10 +6,10 @@ Enter the bus stop number. The bus information will show in a single message. Ea
 ![VideoToGif_GIF.GIF](https://s2.loli.net/2022/09/10/JRbqz1lAhG4xygS.gif)
 
 ## How to find the bus stop number
-### 1.Find it on the bus stop.
+### 1.Find it on the bus stop
 ![](https://s2.loli.net/2022/09/10/nkaUBwNv74A5QSW.png)
 
-### 2.Use [Citymapper](https://citymapper.com/) to find it.
+### 2.Use [Citymapper](https://citymapper.com/) to find it
 ![](https://s2.loli.net/2022/09/10/pIUhR3oqg6VYDNO.png)
 
 ## Monitor
