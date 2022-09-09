@@ -43,7 +43,7 @@ class ChannelMessage(threading.Thread):
                     continue
                 # no data from ATAC
                 if atac.get_stop_name(full_data) == '':
-                    if self.no_info is 1 or self.no_info is 60/self.sleep_time:
+                    if (self.no_info is 1 and self.count is 0) or self.no_info is 60/self.sleep_time:
                         result = "No bus information!"
                         self.no_info += 1
                     else:
