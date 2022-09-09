@@ -31,3 +31,7 @@ sqlite3.OperationalError: no such column: Te
 2022-09-09 22:52:48,810; INFO; Scheduler started
 2022-09-09 22:53:08,660; INFO; Received signal 2 (SIGINT), stopping...
 2022-09-09 22:53:08,660; INFO; Scheduler has been shut down
+2022-09-09 22:54:39,906; INFO; System start successfully!
+2022-09-09 22:54:39,907; INFO; Scheduler started
+2022-09-09 22:54:53,513; INFO; Received signal 2 (SIGINT), stopping...
+2022-09-09 22:54:53,513; INFO; Scheduler has been shut down

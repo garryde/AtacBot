@@ -1,3 +1,4 @@
 *.ini
 .idea
-database.db
+*.db
+*.log
