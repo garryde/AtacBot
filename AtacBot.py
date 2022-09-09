@@ -58,7 +58,13 @@ def echo(update: Update, context: CallbackContext, notification: bool = False):
 
 
 def notify(update: Update, context: CallbackContext):
-    echo(update, context, True)
+    if update.message.text == "/notify":
+        update.message.reply_text(
+            'Please enter the correct command!\n'
+            'Format: /notify BUS_STOP_NUMBER\n'
+            'For example: /notify 70240')
+    else:
+        echo(update, context, True)
 
 
 def button(update: Update, context: CallbackContext):
