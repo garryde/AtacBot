@@ -20,7 +20,7 @@ thread_pool = {}
 def start(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id, text="Welcome to use Rome Bus Monitor robot!\n"
                                                                     "About how to use this Bot:\n"
-                                                                    "https://github.com/garryde/AtacBot/blob/master/DemoBot.md")
+                                                                    "https://bit.ly/3RR2A9R")
 
 
 def stop(update: Update, context: CallbackContext):
