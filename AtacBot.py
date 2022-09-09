@@ -14,8 +14,6 @@ log_format = '%(asctime)s; %(levelname)s; %(message)s'
 logging.basicConfig(filename='logbook.log', level=logging.INFO, format=log_format)
 logging.getLogger('deepl').setLevel(logging.ERROR)
 
-
-
 thread_pool = {}
 
 
@@ -34,6 +32,7 @@ def stop(update: Update, context: CallbackContext):
         thread_pool.pop(update.effective_chat.id)
         result = "Monitor stopped!"
     update.message.reply_text(result)
+
 
 def check(update: Update, context: CallbackContext):
     thread: ChannelMessage = thread_pool.get(update.effective_chat.id)
@@ -68,22 +67,23 @@ def button(update: Update, context: CallbackContext):
 
 def set_favorites(update: Update, context: CallbackContext):
     arg: list = context.args
+    chat_id = str(update.effective_chat.id)
     if len(arg) != 2:
         update.message.reply_text(
-            'Please enter the correct command!\nFormat: /setfavorites BUS_STOP_NUMBER NOTE \nFor example: /setfavorites 70240 Termini')
+            'Please enter the correct command!\n'
+            'Format: /setfavorites BUS_STOP_NUMBER NOTE \n'
+            'For example: /setfavorites 70240 Termini')
     else:
         c = db_connection.cursor()
-        sql_select = "SELECT CHAT_ID, STOP from favorites where CHAT_ID='" + str(
-            update.effective_chat.id) + "' AND STOP='" + arg[0] + "'"
+        sql_select = "SELECT CHAT_ID, STOP from favorites where CHAT_ID='" + chat_id + "' AND STOP='" + arg[0] + "'"
         result = c.execute(sql_select).fetchone()
         if result == None:
-            sql_insert = "INSERT INTO favorites (CHAT_ID, STOP, NOTE) VALUES ('" + str(
-                update.effective_chat.id) + "', '" + arg[0] + "','" + arg[1] + "' )"
+            sql_insert = "INSERT INTO favorites (CHAT_ID, STOP, NOTE) VALUES ('" + chat_id + "', '" + arg[0] + "','" + arg[1] + "' )"
             c.execute(sql_insert)
             db_connection.commit()
             update.message.reply_text("Insert data successful!")
         else:
-            sql_update = "UPDATE favorites set NOTE = '" + arg[1] + "' where ID='" + arg[0] +"'"
+            sql_update = "UPDATE favorites set NOTE = '" + arg[1] + "' where CHAT_ID='" + chat_id +"' and STOP='" + arg[0] + "'"
             c.execute(sql_update)
             db_connection.commit()
             update.message.reply_text("Update data successful!")
@@ -100,11 +100,14 @@ def get_favorites(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Choose a bus stop:', reply_markup=InlineKeyboardMarkup(keyboard))
 
+
 def del_favorites(update: Update, context: CallbackContext):
     arg: list = context.args
     if len(arg) != 1:
         update.message.reply_text(
-            'Please enter the correct command!\nFormat: /delfavorites BUS_STOP_NUMBER \nFor example: /delfavorites 70240')
+            'Please enter the correct command!\n'
+            'Format: /delfavorites BUS_STOP_NUMBER \n'
+            'For example: /delfavorites 70240')
     else:
         c = db_connection.cursor()
         sql_select = "SELECT CHAT_ID, STOP from favorites where CHAT_ID='" + str(
@@ -114,11 +117,11 @@ def del_favorites(update: Update, context: CallbackContext):
         if result is None:
             update.message.reply_text("Bus stop does not exist in Favorites!")
         else:
-            sql_delete = "DELETE from favorites where CHAT_ID='" + str(update.effective_chat.id) + "' AND STOP='" + arg[0] + "'"
+            sql_delete = "DELETE from favorites where CHAT_ID='" + str(update.effective_chat.id) + "' AND STOP='" + arg[
+                0] + "'"
             result = c.execute(sql_delete)
             db_connection.commit()
             update.message.reply_text("Bus stop delete successful!")
-
 
 
 def unknown(update: Update, context: CallbackContext):
