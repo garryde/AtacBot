@@ -2,25 +2,28 @@ import configparser
 import logging
 import os
 import sys
+from sqlite3 import IntegrityError
 
-from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, \
-    CallbackQuery
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telegram.ext import CommandHandler, MessageHandler, Updater, CallbackContext, Filters, CallbackQueryHandler
 from channel_message import ChannelMessage
 import sqlite3
+
+config_file_name = "config.ini"
+
+thread_pool = {}
 
 # logger init
 log_format = '%(asctime)s; %(levelname)s; %(message)s'
 logging.basicConfig(filename='logbook.log', level=logging.INFO, format=log_format)
 logging.getLogger('deepl').setLevel(logging.ERROR)
 
-thread_pool = {}
-
 
 def start(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id, text="Welcome to use Rome Bus Monitor robot!\n"
                                                                     "About how to use this Bot:\n"
                                                                     "https://bit.ly/3RR2A9R")
+    insert_user(update)
 
 
 def stop(update: Update, context: CallbackContext):
@@ -48,6 +51,9 @@ def check(update: Update, context: CallbackContext):
 
 
 def echo(update: Update, context: CallbackContext, notification: bool = False):
+    insert_user(update)
+    update_count(update)
+
     thread = ChannelMessage(update, context, notification)
     thread.start()
 
@@ -86,12 +92,14 @@ def set_favorites(update: Update, context: CallbackContext):
         sql_select = "SELECT CHAT_ID, STOP from favorites where CHAT_ID='" + chat_id + "' AND STOP='" + arg[0] + "'"
         result = c.execute(sql_select).fetchone()
         if result == None:
-            sql_insert = "INSERT INTO favorites (CHAT_ID, STOP, NOTE) VALUES ('" + chat_id + "', '" + arg[0] + "','" + arg[1] + "' )"
+            sql_insert = "INSERT INTO favorites (CHAT_ID, STOP, NOTE) VALUES ('" + chat_id + "', '" + arg[0] + "','" + \
+                         arg[1] + "' )"
             c.execute(sql_insert)
             db_connection.commit()
             update.message.reply_text("Insert data successful!")
         else:
-            sql_update = "UPDATE favorites set NOTE = '" + arg[1] + "' where CHAT_ID='" + chat_id +"' and STOP='" + arg[0] + "'"
+            sql_update = "UPDATE favorites set NOTE = '" + arg[1] + "' where CHAT_ID='" + chat_id + "' and STOP='" + \
+                         arg[0] + "'"
             c.execute(sql_update)
             db_connection.commit()
             update.message.reply_text("Update data successful!")
@@ -132,24 +140,46 @@ def del_favorites(update: Update, context: CallbackContext):
             update.message.reply_text("Bus stop delete successful!")
 
 
+def get_count(update: Update, context: CallbackContext):
+    if update.effective_chat.id != int(admin_chat_id):
+        update.message.reply_text("You don't have permission!")
+    else:
+        cursor = db_connection.execute("SELECT FULL_NAME, COUNT from users")
+        result = "Name  -  Count\n"
+        for row in cursor:
+            result += row[0] + " - " + str(row[1]) + "\n"
+        update.message.reply_text(result)
+
+
 def unknown(update: Update, context: CallbackContext):
     update.message.reply_text("Sorry, I didn't understand that command.")
 
 
-def get_token() -> str:
-    file_name = "config.ini"
+def init_config() -> configparser.RawConfigParser:
     con = configparser.RawConfigParser()
-    if not os.path.exists(file_name):
+    if not os.path.exists(config_file_name):
         con.add_section('config')
         con.set('config', "token", '')
-        with open(file_name, 'w') as fw:
+        con.set('config', "admin_chat_id", '')
+        with open(config_file_name, 'w') as fw:
             con.write(fw)
         print("Running first time!")
         print('The configuration file has been generated!')
         print('Please insert Telegram Bot token!')
         sys.exit()
-    con.read(file_name, encoding='utf-8')
+    return con
+
+
+def get_token() -> str:
+    con = init_config()
+    con.read(config_file_name, encoding='utf-8')
     return dict(con.items('config'))["token"]
+
+
+def get_admin() -> str:
+    con = init_config()
+    con.read(config_file_name, encoding='utf-8')
+    return dict(con.items('config'))["admin_chat_id"]
 
 
 def get_database():
@@ -165,16 +195,53 @@ def get_database():
                (ID INTEGER PRIMARY KEY     autoincrement,
                CHAT_ID           TEXT    NOT NULL,
                MODE            INT     NOT NULL);''')
+        c.execute('''CREATE TABLE users
+               (CHAT_ID TEXT PRIMARY KEY   ,
+               FULL_NAME         TEXT    NOT NULL,
+               IS_BOT           INTEGER    NOT NULL,
+               IS_PREMIUM        TEXT    NOT NULL,
+               LANGUAGE_CODE     TEXT    NOT NULL,
+               COUNT            INTEGER     default 0);''')
         db_connection.commit()
     except sqlite3.OperationalError:
         pass
     return db_connection
 
 
+def insert_user(update: Update):
+    chat_id = update.effective_user.id
+    full_name = update.effective_user.full_name
+    is_bot = update.effective_user.is_bot
+    is_premium = update.effective_user.is_premium
+    language_code = update.effective_user.language_code
+    c = db_connection.cursor()
+    sql_insert_user = "INSERT INTO users (CHAT_ID,FULL_NAME,IS_BOT,IS_PREMIUM,LANGUAGE_CODE) VALUES ('%s','%s','%s','%s','%s');" % (
+    chat_id, full_name, is_bot, is_premium, language_code)
+    try:
+        c.execute(sql_insert_user)
+    except IntegrityError:
+        sql_update_user = "UPDATE users SET FULL_NAME = '%s',IS_BOT = '%s',IS_PREMIUM = '%s',LANGUAGE_CODE = '%s' WHERE CHAT_ID = '%s';" % (
+        full_name, is_bot, is_premium, language_code, chat_id)
+        c.execute(sql_update_user)
+    finally:
+        db_connection.commit()
+
+
+def update_count(update: Update):
+    chat_id = update.effective_user.id
+    sql_update_count = "UPDATE users SET COUNT = COUNT+1 WHERE CHAT_ID = '%s';" % chat_id
+    c = db_connection.cursor()
+    c.execute(sql_update_count)
+    db_connection.commit()
+
+
 if __name__ == '__main__':
     db_connection = get_database()
 
-    updater = Updater(get_token(), use_context=True)
+    tg_token = get_token()
+    admin_chat_id = get_admin()
+
+    updater = Updater(tg_token, use_context=True)
     dp = updater.dispatcher
 
     # on different commands - answer in Telegram
@@ -185,6 +252,7 @@ if __name__ == '__main__':
     dp.add_handler(CommandHandler("getfavorites", get_favorites))
     dp.add_handler(CommandHandler("setfavorites", set_favorites))
     dp.add_handler(CommandHandler("delfavorites", del_favorites))
+    dp.add_handler(CommandHandler("getcount", get_count))
     dp.add_handler(CallbackQueryHandler(button))  # handling inline buttons pressing
     dp.add_handler(MessageHandler(Filters.text & (~Filters.command), echo))
     dp.add_handler(MessageHandler(Filters.command, unknown))
