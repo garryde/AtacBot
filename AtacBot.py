@@ -198,6 +198,7 @@ def get_database():
         c.execute('''CREATE TABLE users
                (CHAT_ID TEXT PRIMARY KEY   ,
                FULL_NAME         TEXT    NOT NULL,
+               USERNAME         TEXT    NOT NULL,
                IS_BOT           INTEGER    NOT NULL,
                IS_PREMIUM        TEXT    NOT NULL,
                LANGUAGE_CODE     TEXT    NOT NULL,
@@ -211,17 +212,18 @@ def get_database():
 def insert_user(update: Update):
     chat_id = update.effective_user.id
     full_name = update.effective_user.full_name
+    username = update.effective_user.username
     is_bot = update.effective_user.is_bot
     is_premium = update.effective_user.is_premium
     language_code = update.effective_user.language_code
     c = db_connection.cursor()
-    sql_insert_user = "INSERT INTO users (CHAT_ID,FULL_NAME,IS_BOT,IS_PREMIUM,LANGUAGE_CODE) VALUES ('%s','%s','%s','%s','%s');" % (
-    chat_id, full_name, is_bot, is_premium, language_code)
+    sql_insert_user = "INSERT INTO users (CHAT_ID,FULL_NAME,USERNAME, IS_BOT,IS_PREMIUM,LANGUAGE_CODE) VALUES ('%s','%s','%s','%s','%s','%s');" % (
+    chat_id, full_name,username ,is_bot, is_premium, language_code)
     try:
         c.execute(sql_insert_user)
     except IntegrityError:
-        sql_update_user = "UPDATE users SET FULL_NAME = '%s',IS_BOT = '%s',IS_PREMIUM = '%s',LANGUAGE_CODE = '%s' WHERE CHAT_ID = '%s';" % (
-        full_name, is_bot, is_premium, language_code, chat_id)
+        sql_update_user = "UPDATE users SET FULL_NAME = '%s',USERNAME = '%s',IS_BOT = '%s',IS_PREMIUM = '%s',LANGUAGE_CODE = '%s' WHERE CHAT_ID = '%s';" % (
+        full_name, username, is_bot, is_premium, language_code, chat_id)
         c.execute(sql_update_user)
     finally:
         db_connection.commit()
