@@ -33,8 +33,8 @@ class ChannelMessage(threading.Thread):
 
     def run(self):
         while self.stop_flag:
-            thread_info = threading.Thread.getName(self)+"-"+str(self.count)
             try:
+                thread_info = threading.Thread.getName(self)+"-"+str(self.count)
                 try:
                     full_data = atac.get_full_data(self.number)
                 except Exception as e:
@@ -57,7 +57,7 @@ class ChannelMessage(threading.Thread):
                     result = "🚏 " + atac.get_stop_name(full_data) + "\n" + atac.get_status(full_data)
                 # send message
                 if self.count == 0:
-                    self.message = self.context.bot.send_message(chat_id=self.chat_id, text=result)
+                    self.message = self.context.bot.send_message(chat_id=self.chat_id, text=result, timeout=2)
                     self.sent = result
                     time.sleep(self.sleep_time)
                     self.count += 1
@@ -65,17 +65,20 @@ class ChannelMessage(threading.Thread):
                     if result != self.sent:
                         self.sent = result
                         if self.notification:
-                            self.message = self.context.bot.send_message(chat_id=self.chat_id, text=result)
+                            self.message = self.context.bot.send_message(chat_id=self.chat_id, text=result, timeout=2)
                         else:
                             self.message = self.context.bot.edit_message_text(chat_id=self.chat_id,
                                                                               message_id=self.message.message_id,
-                                                                              text=result)
+                                                                              text=result, timeout=2)
                     time.sleep(self.sleep_time)
                     self.count += 1
                 else:
                     self.stop_flag = False
-                    self.message = self.context.bot.send_message(chat_id=self.chat_id, text='Monitor stoped!')
+                    self.message = self.context.bot.send_message(chat_id=self.chat_id, text='Monitor stoped!', timeout=2)
                     break
             except Exception as e:
                 self.stop_flag = False
+                print(self.chat_id)
+                print(thread_info)
+                print(e)
                 logging.error("thread error; chet_id:" + str(self.chat_id) + "; " + thread_info + "; " + str(e))

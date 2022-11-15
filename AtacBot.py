@@ -41,12 +41,13 @@ def stop(update: Update, context: CallbackContext):
 
 def check(update: Update, context: CallbackContext):
     thread: ChannelMessage = thread_pool.get(update.effective_chat.id)
+    print()
     if thread is None:
         result = "You don't have active monitor!"
-    elif not thread.stop_flag:
-        result = "You don't have active monitor!"
-    else:
+    elif thread.is_alive():
         result = "You have an active monitor!"
+    else:
+        result = "You don't have active monitor!"
     update.message.reply_text(result)
 
 
@@ -214,7 +215,10 @@ def insert_user(update: Update):
     full_name = update.effective_user.full_name
     username = update.effective_user.username
     is_bot = update.effective_user.is_bot
-    is_premium = update.effective_user.is_premium
+    try:
+        is_premium = update.effective_user.is_premium
+    except Exception:
+        is_premium = "None"
     language_code = update.effective_user.language_code
     c = db_connection.cursor()
     sql_insert_user = "INSERT INTO users (CHAT_ID,FULL_NAME,USERNAME, IS_BOT,IS_PREMIUM,LANGUAGE_CODE) VALUES ('%s','%s','%s','%s','%s','%s');" % (
