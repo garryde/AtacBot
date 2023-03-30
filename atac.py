@@ -30,7 +30,7 @@ def get_full_data(number: str) -> dict:
         else:
             return result_dic
     except Exception as e:
-        logging.error("get_full_data error; RESULT "+ result +" RESULT "+ str(e))
+        logging.error("get full data error; RESULT "+ result +" RESULT "+ str(e))
         return ""
 
 
@@ -52,7 +52,6 @@ def get_status(result_dic: dict) -> str:
         for bus in result_set:
             txt += bus['line'] + empty_string[:(5-len(bus['line']))*2] +bus['distanzaAVM'].replace('FERMATA', 'Stop').replace('FERMATE', 'Stops').replace('A CAPOLINEA','At The Terminal').replace('IN ARRIVO', 'Arriving') + "\n"
     return txt
-
 
 class Atac:
     pass
