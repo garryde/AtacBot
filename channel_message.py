@@ -5,6 +5,7 @@ import threading
 import atac
 import time
 import logging
+import traceback
 
 
 class ChannelMessage(threading.Thread):
@@ -78,7 +79,4 @@ class ChannelMessage(threading.Thread):
                     break
             except Exception as e:
                 self.stop_flag = False
-                print(self.chat_id)
-                print(thread_info)
-                print(e)
-                logging.error("thread error; chet_id:" + str(self.chat_id) + "; " + thread_info + "; " + str(e))
+                logging.error("thread error; chet_id:" + str(self.chat_id) + "; " + thread_info + "; " + traceback.format_exc())
