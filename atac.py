@@ -30,7 +30,8 @@ def get_full_data(number: str) -> dict:
         else:
             return result_dic
     except Exception as e:
-        logging.error("get full data error; RESULT "+ result +" RESULT "+ str(e))
+        logging.error("get full data error; " + str(e))
+        logging.error("\n"+"#"*50+"\n "+ result +" \n"+"#"*50)
         return ""
 
 

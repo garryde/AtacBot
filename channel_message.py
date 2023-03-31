@@ -43,6 +43,11 @@ class ChannelMessage(threading.Thread):
                     time.sleep(self.sleep_time)
                     continue
                 # no data from ATAC
+                if full_data == '':
+                    self.stop_flag = False
+                    self.message = self.context.bot.send_message(chat_id=self.chat_id, text='ATAC Service Exception', timeout=2)
+                    break
+                # no bus information
                 if atac.get_stop_name(full_data) == '':
                     if (self.no_info == 1 and self.count == 0) or (self.no_info == 60/self.sleep_time and self.count != 0):
                         result = "No bus information!"
