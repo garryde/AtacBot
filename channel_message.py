@@ -9,7 +9,7 @@ import traceback
 
 
 class ChannelMessage(threading.Thread):
-    def __init__(self, update: Update, context: CallbackContext, notification: bool = False, cycle: int = 15):
+    def __init__(self, update: Update, context: CallbackContext, notification: bool = False, cycle: int = 10):
         threading.Thread.__init__(self)
         if update.message is not None:
             if len(update.message.entities) != 0:
