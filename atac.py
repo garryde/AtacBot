@@ -1,9 +1,12 @@
 import json
 import logging
 import requests
-
+from config import Config
 
 def get_full_data(number: str) -> dict:
+    conf = Config()
+    cookie = conf.read_str('cookie')
+
     url = "https://www.atac.roma.it/Service/WebService.asmx/GetRealTimeData"
     data = {'languageName': 'it', 'stopCode': number}
     headers = {
@@ -19,12 +22,19 @@ def get_full_data(number: str) -> dict:
         'Referer': 'https://www.atac.roma.it/',
         'Content-Length': '40',
         'Connection': 'keep-alive',
-        'Sec-Fetch-Dest': 'empty'
+        'Sec-Fetch-Dest': 'empty',
+        'Cookie': cookie
     }
 
-    result = requests.post(url, json=data, headers=headers).text
+    result = requests.post(url, json=data, headers=headers)
+    cookie = result.cookies.get_dict()
+    cookie_str = ""
+    for k,v in cookie.items():
+        cookie_str += k+"="+v+"; "
+    conf.write_cookie(cookie_str[:-2])
+
     try:
-        result_dic = json.loads(result)["RealTimeData"]
+        result_dic = json.loads(result.text)["RealTimeData"]
         if result_dic['avmdata'] is None:
             return ""
         else:
@@ -56,4 +66,3 @@ def get_status(result_dic: dict) -> str:
 
 class Atac:
     pass
-

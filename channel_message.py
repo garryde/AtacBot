@@ -27,8 +27,8 @@ class ChannelMessage(threading.Thread):
         self.count = 0
         self.sent = ''
         # Cycle interval(second)
-        self.sleep_time = 20
-        self.no_info_sleep_time = 30
+        self.sleep_time = 5
+        self.no_info_sleep_time = 10
         # Thread activated duration(minutes * 60seconds)
         self.cycle = cycle * 60
 

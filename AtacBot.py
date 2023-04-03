@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from sqlite3 import IntegrityError
-
+import config
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telegram.ext import CommandHandler, MessageHandler, Updater, CallbackContext, Filters, CallbackQueryHandler
 from channel_message import ChannelMessage
@@ -17,6 +17,7 @@ thread_pool = {}
 log_format = '%(asctime)s; %(levelname)s; %(message)s'
 logging.basicConfig(filename='logbook.log', level=logging.INFO, format=log_format)
 logging.getLogger('deepl').setLevel(logging.ERROR)
+
 
 
 def start(update: Update, context: CallbackContext):
@@ -156,32 +157,6 @@ def unknown(update: Update, context: CallbackContext):
     update.message.reply_text("Sorry, I didn't understand that command.")
 
 
-def init_config() -> configparser.RawConfigParser:
-    con = configparser.RawConfigParser()
-    if not os.path.exists(config_file_name):
-        con.add_section('config')
-        con.set('config', "token", '')
-        con.set('config', "admin_chat_id", '')
-        with open(config_file_name, 'w') as fw:
-            con.write(fw)
-        print("Running first time!")
-        print('The configuration file has been generated!')
-        print('Please insert Telegram Bot token!')
-        sys.exit()
-    return con
-
-
-def get_token() -> str:
-    con = init_config()
-    con.read(config_file_name, encoding='utf-8')
-    return dict(con.items('config'))["token"]
-
-
-def get_admin() -> str:
-    con = init_config()
-    con.read(config_file_name, encoding='utf-8')
-    return dict(con.items('config'))["admin_chat_id"]
-
 
 def get_database():
     db_connection = sqlite3.connect('database.db', check_same_thread=False)
@@ -242,10 +217,15 @@ def update_count(update: Update):
 
 
 if __name__ == '__main__':
+    # Database connection
     db_connection = get_database()
 
-    tg_token = get_token()
-    admin_chat_id = get_admin()
+    # config
+    config_list = ["bot_token", "admin_chat_id", "cookie"]
+    conf = config.Config(config_strs=config_list)
+    tg_token = conf.read_str("bot_token")
+    admin_chat_id = conf.read_str("admin_chat_id")
+
 
     updater = Updater(tg_token, use_context=True)
     dp = updater.dispatcher
