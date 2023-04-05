@@ -22,7 +22,7 @@ def get_full_data(number: str) -> dict:
         'Referer': 'https://www.atac.roma.it/',
         'Content-Length': '40',
         'Connection': 'keep-alive',
-        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Dest': 'cookie',
         'Cookie': cookie
     }
 
@@ -32,7 +32,7 @@ def get_full_data(number: str) -> dict:
     for k,v in cookie.items():
         cookie_str += k+"="+v+"; "
     conf.write_cookie(cookie_str[:-2])
-
+    # print(cookie_str[:-2])
     try:
         result_dic = json.loads(result.text)["RealTimeData"]
         if result_dic['avmdata'] is None:

@@ -27,8 +27,8 @@ class ChannelMessage(threading.Thread):
         self.count = 0
         self.sent = ''
         # Cycle interval(second)
-        self.sleep_time = 5
-        self.no_info_sleep_time = 10
+        self.sleep_time = 30
+        self.no_info_sleep_time = 30
         # Thread activated duration(minutes * 60seconds)
         self.cycle = cycle * 60
 
@@ -64,7 +64,7 @@ class ChannelMessage(threading.Thread):
                 if self.count == 0:
                     self.message = self.context.bot.send_message(chat_id=self.chat_id, text=result, timeout=2)
                     self.sent = result
-                    time.sleep(get_sleep_time())
+                    time.sleep(self.get_sleep_time())
                     self.count += 1
                 elif self.count < self.cycle / self.sleep_time:
                     if result != self.sent:
@@ -75,7 +75,7 @@ class ChannelMessage(threading.Thread):
                             self.message = self.context.bot.edit_message_text(chat_id=self.chat_id,
                                                                               message_id=self.message.message_id,
                                                                               text=result, timeout=2)
-                    time.sleep(get_sleep_time())
+                    time.sleep(self.get_sleep_time())
                     self.count += 1
                 else:
                     self.stop_flag = False
