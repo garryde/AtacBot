@@ -6,7 +6,7 @@ import atac
 import time
 import logging
 import traceback
-
+import random
 
 class ChannelMessage(threading.Thread):
     def __init__(self, update: Update, context: CallbackContext, notification: bool = False, cycle: int = 10):
@@ -43,12 +43,12 @@ class ChannelMessage(threading.Thread):
                     time.sleep(self.sleep_time)
                     continue
                 # no data from ATAC
-                if full_data == '':
+                if full_data == 'Error':
                     self.stop_flag = False
                     self.message = self.context.bot.send_message(chat_id=self.chat_id, text='ATAC Service Exception', timeout=2)
                     break
                 # no bus information
-                if atac.get_stop_name(full_data) == '':
+                if full_data == 'None':
                     if (self.no_info == 1 and self.count == 0) or (self.no_info == 60/self.sleep_time and self.count != 0):
                         result = "No bus information!"
                         self.no_info += 1
@@ -65,7 +65,7 @@ class ChannelMessage(threading.Thread):
                 if self.count == 0:
                     self.message = self.context.bot.send_message(chat_id=self.chat_id, text=result, timeout=2)
                     self.sent = result
-                    time.sleep(self.sleep_time)
+                    time.sleep(get_sleep_time())
                     self.count += 1
                 elif self.count < self.cycle / self.sleep_time:
                     if result != self.sent:
@@ -76,7 +76,7 @@ class ChannelMessage(threading.Thread):
                             self.message = self.context.bot.edit_message_text(chat_id=self.chat_id,
                                                                               message_id=self.message.message_id,
                                                                               text=result, timeout=2)
-                    time.sleep(self.sleep_time)
+                    time.sleep(get_sleep_time())
                     self.count += 1
                 else:
                     self.stop_flag = False
@@ -85,3 +85,11 @@ class ChannelMessage(threading.Thread):
             except Exception as e:
                 self.stop_flag = False
                 logging.error("thread error; chet_id:" + str(self.chat_id) + "; " + thread_info + "; " + traceback.format_exc())
+
+
+    def get_sleep_time(self) -> float:
+        n = self.sleep_time
+        lower_bound = n - n * 0.2
+        upper_bound = n + n * 0.2
+        return random.uniform(lower_bound, upper_bound)
+

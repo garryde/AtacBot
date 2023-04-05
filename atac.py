@@ -36,13 +36,13 @@ def get_full_data(number: str) -> dict:
     try:
         result_dic = json.loads(result.text)["RealTimeData"]
         if result_dic['avmdata'] is None:
-            return ""
+            return "None"
         else:
             return result_dic
     except Exception as e:
         logging.error("get full data error; " + str(e))
         logging.error("\n"+"#"*50+"\n "+ result +" \n"+"#"*50)
-        return ""
+        return "Error"
 
 
 def get_stop_name(result_dic: dict) -> str:
