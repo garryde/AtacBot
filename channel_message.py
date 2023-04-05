@@ -36,13 +36,12 @@ class ChannelMessage(threading.Thread):
         while self.stop_flag:
             try:
                 thread_info = threading.Thread.getName(self)+"-"+str(self.count)
-                try:
-                    full_data = atac.get_full_data(self.number)
-                except Exception as e:
-                    logging.warning("get_full_data(); chet_id:"+str(self.chat_id)+"; "+thread_info + "; " + str(e))
-                    time.sleep(self.sleep_time)
-                    continue
+                full_data = atac.get_full_data(self.number)
                 # no data from ATAC
+                if full_data == 'CAPTCHA':
+                    self.stop_flag = False
+                    self.message = self.context.bot.send_message(chat_id=self.chat_id, text='ATAC Blocked Server', timeout=2)
+                    break
                 if full_data == 'Error':
                     self.stop_flag = False
                     self.message = self.context.bot.send_message(chat_id=self.chat_id, text='ATAC Service Exception', timeout=2)

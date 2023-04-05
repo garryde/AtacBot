@@ -40,9 +40,12 @@ def get_full_data(number: str) -> dict:
         else:
             return result_dic
     except Exception as e:
-        logging.error("get full data error; " + str(e))
-        logging.error("\n"+"#"*50+"\n "+ result.text +" \n"+"#"*50)
-        return "Error"
+        if 'CAPTCHA' in result.text:
+            logging.error("get_full_data(); " + str(e) + "; CAPTCHA Blocked")
+            return "CAPTCHA"
+        else:
+            logging.error("get_full_data(); " + str(e) + "; Unknown Error")
+            return "Error"
 
 
 def get_stop_name(result_dic: dict) -> str:
