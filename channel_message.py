@@ -27,7 +27,7 @@ class ChannelMessage(threading.Thread):
         self.count = 0
         self.sent = ''
         # Cycle interval(second)
-        self.sleep_time = 30
+        self.sleep_time = 45
         self.no_info_sleep_time = 30
         # Thread activated duration(minutes * 60seconds)
         self.cycle = cycle * 60
@@ -89,6 +89,6 @@ class ChannelMessage(threading.Thread):
     def get_sleep_time(self) -> float:
         n = self.sleep_time
         lower_bound = n - n * 0.2
-        upper_bound = n + n * 0.2
+        upper_bound = n + n * 0.5
         return random.uniform(lower_bound, upper_bound)
 
